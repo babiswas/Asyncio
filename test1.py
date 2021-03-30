@@ -1,21 +1,23 @@
-import asyncio
-from datetime import datetime
-
-async def task(str1):
-   print(f"Obtained {str1} task")
-   await asyncio.sleep(3)
-   return f"Completed {str1} task"
-
-async def task_container():
-     task_1=asyncio.create_task(task("Clean room"))
-     task_2=asyncio.create_task(task("Clean Toilet"))
-     task_3=asyncio.create_task(task("Arrange desk"))
-     result1=await task_1
-     result2=await task_2
-     result3=await task_3
-     print(result1)
-     print(result2)
-     print(result3)
+class A:
+  def __init__(self,num):
+      self.num=num
+  def __iter__(self):
+      if not hasattr(A,'threshold'):
+         self.threshold=6
+      return self
+  def __next__(self):
+      if self.num>self.threshold:
+         raise StopIteration("Number greater than threshold")
+      else:
+         item=self.num
+         self.num=self.num+1
+         return item
 
 if __name__=="__main__":
-   asyncio.run(task_container())
+   obj=A(4)
+   ptr=iter(obj)
+   print(next(ptr))
+   print(next(ptr))
+   print(next(ptr))
+   print(next(ptr))
+   print(next(ptr))
