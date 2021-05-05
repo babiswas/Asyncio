@@ -1,71 +1,67 @@
-class Node:
-   def __init__(self,value):
-       self.value=value
-       self.left=None
-       self.right=None
+import asyncio
+import aiohttp
 
-   def inorder(self):
-       if self:
-          if self.left:
-             self.left.inorder()
-          print(self.value)
-          if self.right:
-             self.right.inorder()
 
-   def vertical_order_traversal(self):
-       top_view=list()
-       bottom_view=list()
-       queue=[]
-       vert_list=dict()
-       queue.append((self,0))
-       while queue:
-           obj,index=queue.pop(0)
-           if index not in vert_list:
-              vert_list[index]=[]
-           vert_list[index].append(obj.value)
+class Endpoint:
+   def __init__(self,l):
+      self.iter1=iter(l)
+   def __aiter__(self):
+      return self
+   async def __anext__(self):
+      await asyncio.sleep(0)
+      try:
+        object=next(self.iter1)
+      except StopIteration:
+        raise StopAsyncIteration
+      return object
 
-           if obj.left:
-              queue.append((obj.left,index-1))
-           if obj.right:
-              queue.append((obj.right,index+1))
-       for ptr in sorted(vert_list.keys()):
-               top_view.append(vert_list[ptr][0])
-               bottom_view.append(vert_list[ptr][-1])
-       print("The top view of the tree is")
-       print([val for val in top_view])
-       print("The bottom view of the tree is")
-       print([val for val in bottom_view])
-                      
-   def insert(self,value):
-       if self.value>value:
-          if self.left:
-             self.left.insert(value)
-          else:
-             self.left=Node(value)
-       elif self.value<value:
-           if self.right:
-              self.right.insert(value)
-           else:
-              self.right=Node(value)
-       else:
-          print("Duplication not allowed")
+async def main(endpoint):
+   API_URL="https://captivateprimeqe.adobe.com/primeapi/v2/"+endpoint
+   headers={"Authorization":"oauth "+"7b9a1a5f7417565865dbf69efee30e85"}
+   async with aiohttp.ClientSession() as session:
+       async with session.get(API_URL,headers=headers) as resp:
+            if resp.status==200:
+               return await resp.json()
+            else:
+               raise Exception
+
+
+async def request():
+   l=list()
+   API_URL="https://captivateprimeqe.adobe.com/primeapi/v2/"
+   headers={"Authorization":"oauth "+"7b9a1a5f7417565865dbf69efee30e85"}
+   endpoints=["badges","catalogs"]
+   async with aiohttp.ClientSession() as session:
+       async for path in Endpoint(endpoints):
+           async with session.get(API_URL+path,headers=headers) as resp:
+              if resp.status==200:
+                l.append(await resp.json())
+              else:
+                raise Exception
+   return l
+
+
+async def master_task():
+    task1=asyncio.create_task(main("badges"))
+    task2=asyncio.create_task(main("catalogs"))
+    tasklist=[await task1,await task2]
+    return tasklist
+
+async def main1():
+  completed,pending=await asyncio.wait([main("badges"),main("catalogs")],return_when=asyncio.ALL_COMPLETED)
+  print([obj.result() for obj in completed])
+  print([obj.result() for obj in pending])
+
+
+async def main2():
+   return await asyncio.gather(main("badges"),main("catalogs"))
 
 if __name__=="__main__":
-   node=Node(12)
-   node.insert(6)
-   node.insert(10)
-   node.insert(4)
-   node.insert(2)
-   node.insert(5)
-   node.insert(11)
-   node.insert(9)
-   node.insert(20)
-   node.insert(18)
-   node.insert(25)
-   node.insert(23)
-   print("The inorder traversal of the node is")
-   node.inorder()
-   print("The vertical order traversal of the tree is")
-   node.vertical_order_traversal()
-   
-   
+   loop=asyncio.get_event_loop()
+   print(loop.run_until_complete(request()))
+
+
+
+
+
+            
